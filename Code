@@ -1,0 +1,117 @@
+#%reset
+from tqdm import tqdm
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from PyPDF2 import PdfFileMerger, PdfFileReader
+import os
+%matplotlib inline
+
+pd.options.display.max_rows=1000
+pd.options.display.max_columns=1000
+
+
+pd.options.display.float_format = '{:.2f}'.format
+df=pd.read_excel('C:\\Users\\Aleksa\\Documents\\Desktop\\BOXPLOT GRAPHS\\CH_orders1.xls', float_format='%.6f')
+df['DATERANK']=df['TRAN_DATETIME'].rank(method='dense').astype(int)
+df['EXPOSURE']=df['VOLUME']*df['PRICE']
+df=df[['TRAN_STATUS','INS_TYPE','VOLUME','PRICE', 'TRAN_DATETIME', 'PARTY','BID_ASK', 'TRAN_INS_TYPE','EXPOSURE','DATERANK']] 
+
+
+instrument='product'
+transtatus='C'
+ba1='B'
+ba2='A'
+Q='VOLUME'
+
+todaylist=[]
+todaylist1=[]
+historylistA=[]
+historylistB=[]
+
+for i in tqdm(range(0,max(df.DATERANK.unique())-30)):
+        
+     
+        df['iteration']= i
+       
+        
+        today=df.loc[(df['TRAN_STATUS']==transtatus) & 
+        (df['DATERANK']==(i+31)) & (df['TRAN_INS_TYPE']=='ST') &(df['PARTY']=='company')&
+        ((df['BID_ASK']==ba1)|(df['BID_ASK']==ba2) )&
+        (df['INS_TYPE']==instrument)].groupby(['DATERANK','TRAN_DATETIME']).mean()
+      
+        
+        today1=df.loc[(df['TRAN_STATUS']==transtatus) & 
+        (df['DATERANK']==(i+31)) & (df['TRAN_INS_TYPE']=='ST') &(df['PARTY']=='company')&
+        ((df['BID_ASK']==ba1)|(df['BID_ASK']==ba2) )&
+        (df['INS_TYPE']==instrument)]#.groupby(['DATERANK','TRAN_DATETIME'])
+        
+        historylista=[]
+        historylistb=[]
+        for j in range (1,31):
+            
+                historya=df.loc[(df['TRAN_STATUS']==transtatus) &  
+                (df['DATERANK']==(i+j)) & (df['TRAN_INS_TYPE']=='ST') & 
+                ((df['BID_ASK']==ba1)|(df['BID_ASK']==ba2) )&
+                (df['INS_TYPE']==instrument)]#.groupby(['DATERANK','TRAN_DATETIME']).mean()
+
+
+
+                historyb=df.loc[(df['TRAN_STATUS']==transtatus) &  
+                (df['DATERANK']==(i+j)) & (df['TRAN_INS_TYPE']=='ST') &
+                ((df['BID_ASK']==ba1)|(df['BID_ASK']==ba2) )&
+                (df['INS_TYPE']==instrument)].groupby(['DATERANK']).mean()
+
+                historylista.append(historya)
+                historylistb.append(historyb)
+        
+        
+        
+        historylista = pd.concat(historylista, axis=0)
+        historylistb = pd.concat(historylistb, axis=0)
+        
+        todaylist.append(today)
+        todaylist1.append(today1)
+        
+        historylistA.append(historylista)
+        historylistB.append(historylistb)
+        
+todaylist = pd.concat(todaylist, axis=0)
+todaylist1 = pd.concat(todaylist1, axis=0)
+historylistA = pd.concat(historylistA, axis=0)
+historylistB = pd.concat(historylistB, axis=0)
+
+todaylist =todaylist.reset_index()
+todaylist1 =todaylist1.reset_index()
+historylistA=historylistA.reset_index()        
+historylistB=historylistB.reset_index() 
+
+for t in todaylist.iteration.unique():
+    plt.figure(figsize=(15,2))
+    
+    boxA=historylistA[Q].loc[historylistA['iteration']==t]
+    box_coordinates_a=[max(boxA),boxA.quantile(0.95),boxA.quantile(0.5), boxA.quantile(0.05), min(boxA)]
+    
+    boxB=historylistB[Q].loc[historylistB['iteration']==t]
+    box_coordinates_b=[max(boxB),boxB.quantile(0.95),boxB.quantile(0.5), boxB.quantile(0.05), min(boxB)]
+    
+    ax=plt.subplot(1,5,1)
+    plt.boxplot(list(todaylist[Q].loc[todaylist['iteration']==t]), showmeans=True, positions=[t])
+    plt.scatter( len(list(todaylist1[Q].loc[todaylist1['iteration']==t]))*[t],list(todaylist1[Q].loc[todaylist1['iteration']==t]))
+    #ax.set_yticks([0, 0.5, 1, 2, 3.5, 4])
+    
+    ax1=plt.subplot(1,5,2)
+    plt.boxplot(list(boxA), showmeans=True, positions=[t], showfliers=False)
+    #ax.set_yticks([0, 0.5, 1, 2, 3.5, 4])
+    
+    ax2=plt.subplot(1,5,3)
+    plt.boxplot(list(boxB), showmeans=True, positions=[t], showfliers=False)
+    
+    ax3=plt.subplot(1,5,4)
+    plt.boxplot(box_coordinates_a, showmeans=True, positions=[t], showfliers=False)
+    
+    ax4=plt.subplot(1,5,5)
+    plt.boxplot(box_coordinates_b, showmeans=True, positions=[t], showfliers=False)
+    
+
+    plt.show()
