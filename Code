@@ -12,7 +12,7 @@ pd.options.display.max_columns=1000
 
 
 pd.options.display.float_format = '{:.2f}'.format
-df=pd.read_excel('C:\\Users\\Aleksa\\Documents\\Desktop\\BOXPLOT GRAPHS\\CH_orders1.xls', float_format='%.6f')
+df=pd.read_excel('C:\\Users\\Aleksa\\Documents\\Desktop\\BOXPLOT GRAPHS\\boxplot_example_values.xls', float_format='%.6f')
 df['DATERANK']=df['TRAN_DATETIME'].rank(method='dense').astype(int)
 df['EXPOSURE']=df['VOLUME']*df['PRICE']
 df=df[['TRAN_STATUS','INS_TYPE','VOLUME','PRICE', 'TRAN_DATETIME', 'PARTY','BID_ASK', 'TRAN_INS_TYPE','EXPOSURE','DATERANK']] 
