@@ -2,6 +2,8 @@
 
 Python code for making boxplots in a rolling timeframe.
 The script is made for Jupiter notebook, which allows for dynamic visual output.
+This is a handy tool for visual comparison of different subsets of data.
+
 An example table "boxplot_example_value.xls" with dummy data is attached.
 
 The code is written against the following columns/parameters of the example table:
